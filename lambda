@@ -1,0 +1,202 @@
+#------------------------------Part1--------------------------------
+# In this part we define a list that contains the player names, and 
+# a dictionary with player hard coded moods.
+#test function to be replaced later.
+#def mood():
+#    state = "happy"
+#    return(state)
+
+# Here we define the functions to randomly select moods for unidentified players. These functions can be moved to the bottom later in development.
+
+def reason(mood):
+  import random
+  reason_list_cranky=["they haven't had their coffee", "too much rain and not enough rainbows", "too much wine and not enough whiskey", "too much wine and not enough coffee", "there's only one of them and a whole lot of assholes"]
+  reason_list_sad=["too much butter and not enough butterflies", "they still can't accept that saved by the bell was cancelled", "gasoline used to cost a nickle"]
+  reason_list_happy=["they just saved fifteen percent by switching to geico", "they found their friends, they're in their head", "sunshine on their shoulders makes them so", "they know it and so they clap their hands"]
+  reason_list_excited=["they just can't hide it", "their bank account has more zeroes than the lottery", "mcdonalds is serving the mcrib again"]
+  reason_list_sleepy=["they got in a fight with their pillow", "they used their curtains for a blanket", "too many sleepovers and not enough sleep"]
+  if mood=="cranky":
+      reason=random.choice(reason_list_cranky)
+  elif mood=="sad":
+      reason=random.choice(reason_list_sad)
+  elif mood=="happy":
+      reason=random.choice(reason_list_happy)
+  elif mood=="excited":
+      reason=random.choice(reason_list_excited)
+  elif mood=="sleepy":
+      reason=random.choice(reason_list_sleepy)
+  else:
+      reason="I'm not really sure"
+  return(reason)
+ 
+#Exceptions handle here for future development where 2 variables are passed by Alexa, one being mood one being name. (Eg: Why is John Cranky today).
+
+def mood():
+  import random
+  mood_list =["happy", "sad", "cranky", "excited", "sleepy"]
+  state = random.choice(mood_list)
+  return(state)
+  
+def unknown_name():
+    state=mood()
+    answer_back="I think they are "+state+" because "+reason(state)+""
+    return(answer_back)
+  
+#Set a default global mood.  This is in anticipation of setting specific moods for known personages later (eg: Alexa, why is John Cranky?)
+  
+
+  
+
+    
+Player_LIST = ["john", "heather", "celeste", "persephone", "daimon", "dad", "tasha", "sage", "monster", "tim", "rozan", "tom"]
+
+Player_BIOGRAPHY = {"john":"John Robinson is cranky because he quit smoking",
+
+"heather":"Heather is cranky because " +reason("cranky") +"",
+
+"celeste":"Celeste is cranky because she stayed up all night on Instagram.",
+
+"damon":"Damon is the most cheerful guy I know!",
+    
+"tasha":"Natasha is cranky because she has to do the dishes.",
+
+"sage":"Sage is in a great mood because Damon is home!",
+
+"monster":"Monster is currently prowling for snakes.",
+
+"rozan":"Rosanne is excite about 5 s!",
+
+"tom":"Tom is anxious because the sky is falling, the sky is falling!",
+
+"tim":"Tim Metsgar is worried D T C orders will not get out on time.",
+}
+#------------------------------Part2--------------------------------
+# Here we define our Lambda function and configure what it does when 
+# an event with a Launch, Intent and Session End Requests are sent. # The Lambda function responses to an event carrying a particular 
+# Request are handled by functions such as on_launch(event) and 
+# intent_scheme(event).
+def lambda_handler(event, context):
+    if event['session']['new']:
+        on_start()
+    if event['request']['type'] == "LaunchRequest":
+        return on_launch(event)
+    elif event['request']['type'] == "IntentRequest":
+        return intent_scheme(event)
+    elif event['request']['type'] == "SessionEndedRequest":
+        return on_end()
+    else:
+        return on_end()
+
+# Here we define the Request handler functions
+def on_start():
+    print("Session Started.")
+
+def on_launch(event):
+    onlunch_MSG = "Hello, who would you like me to analyze today?"
+    reprompt_MSG = "Would you like to analyze anyone in particular?"
+    card_TEXT = "Pick a person to analyze."
+    card_TITLE = "Pick a peraon."
+    return output_json_builder_with_reprompt_and_card(onlunch_MSG, card_TEXT, card_TITLE, reprompt_MSG, False)
+
+def on_end():
+    print("Session Ended.")
+    
+
+    
+
+# Define the intent_scheme(event) function to handle the Intent Request. 
+
+
+def intent_scheme(event):
+    
+    intent_name = event['request']['intent']['name']
+
+    if intent_name == "playerAttitude":
+        return player_bio(event)        
+    elif intent_name in ["AMAZON.NoIntent", "AMAZON.StopIntent", "AMAZON.CancelIntent"]:
+        return stop_the_skill(event)
+    elif intent_name == "AMAZON.HelpIntent":
+        return assistance(event)
+    elif intent_name == "AMAZON.FallbackIntent":
+        return fallback_call(event)
+    else:
+        return fallback_call(event)
+
+# Here we define the intent handler functions
+# We will add a pickup for all unrecognizable names so taht they can be handled through random mood/reason assignments
+def player_bio(event):
+    name=event['request']['intent']['slots']['player']['value']
+    player_list_lower=[w.lower() for w in Player_LIST]
+    if name.lower() in player_list_lower:
+        reprompt_MSG = "Do you want to hear more about someone's attitude?"
+        card_TEXT = "You've picked " + name.lower()
+        card_TITLE = "You've picked " + name.lower()
+        return output_json_builder_with_reprompt_and_card(Player_BIOGRAPHY[name.lower()], card_TEXT, card_TITLE, reprompt_MSG, False)
+    else:
+        wrongname_MSG = unknown_name()
+        reprompt_MSG = "Do you want to hear more about someone's attitude?"
+        card_TEXT = "You've picked " 
+        card_TITLE = "You've picked " 
+        return output_json_builder_with_reprompt_and_card(wrongname_MSG, card_TEXT, card_TITLE, reprompt_MSG, False)
+        
+def stop_the_skill(event):
+    stop_MSG = "Thank you. Bye!"
+    reprompt_MSG = ""
+    card_TEXT = "Bye."
+    card_TITLE = "Bye Bye."
+    return output_json_builder_with_reprompt_and_card(stop_MSG, card_TEXT, card_TITLE, reprompt_MSG, True)
+    
+def assistance(event):
+    assistance_MSG = "Ask about a person and I will let you know what their current attitude is."
+    reprompt_MSG = "Do you want to hear more about someone's attitude?r?"
+    card_TEXT = "You've asked for help."
+    card_TITLE = "Help"
+    return output_json_builder_with_reprompt_and_card(assistance_MSG, card_TEXT, card_TITLE, reprompt_MSG, False)
+
+def fallback_call(event):
+    fallback_MSG = "I can't help you with that, try rephrasing the question or ask for help by saying HELP."
+    reprompt_MSG = "Do you want to hear more about someone's attitude?"
+    card_TEXT = "You've asked a wrong question."
+    card_TITLE = "Wrong question."
+    return output_json_builder_with_reprompt_and_card(fallback_MSG, card_TEXT, card_TITLE, reprompt_MSG, False)
+    
+#Here we will generate the random moods and causes and return them to the bio.
+#random moods and causes moved to top to make maintenance easier.  Will return here if maintenance slows down.
+
+
+# The response of our Lambda function should be in a json format. 
+# That is why in this part of the code we define the functions which 
+# will build the response in the requested format. These functions
+# are used by both the intent handlers and the request handlers to 
+# build the output.
+def plain_text_builder(text_body):
+    text_dict = {}
+    text_dict['type'] = 'PlainText'
+    text_dict['text'] = text_body
+    return text_dict
+
+def reprompt_builder(repr_text):
+    reprompt_dict = {}
+    reprompt_dict['outputSpeech'] = plain_text_builder(repr_text)
+    return reprompt_dict
+    
+def card_builder(c_text, c_title):
+    card_dict = {}
+    card_dict['type'] = "Simple"
+    card_dict['title'] = c_title
+    card_dict['content'] = c_text
+    return card_dict    
+
+def response_field_builder_with_reprompt_and_card(outputSpeach_text, card_text, card_title, reprompt_text, value):
+    speech_dict = {}
+    speech_dict['outputSpeech'] = plain_text_builder(outputSpeach_text)
+    speech_dict['card'] = card_builder(card_text, card_title)
+    speech_dict['reprompt'] = reprompt_builder(reprompt_text)
+    speech_dict['shouldEndSession'] = value
+    return speech_dict
+
+def output_json_builder_with_reprompt_and_card(outputSpeach_text, card_text, card_title, reprompt_text, value):
+    response_dict = {}
+    response_dict['version'] = '1.0'
+    response_dict['response'] = response_field_builder_with_reprompt_and_card(outputSpeach_text, card_text, card_title, reprompt_text, value)
+    return response_dict
